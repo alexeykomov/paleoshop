@@ -1,0 +1,1 @@
+# This is the server-rendered shop web app.
