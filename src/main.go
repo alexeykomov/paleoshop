@@ -9,9 +9,10 @@ import (
 
 func main() {
 	http.HandleFunc("/", controllers.IndexHandler)
-	_, err := storage.Connection()
+	db, err := storage.Connection()
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+	storage.GetCategories()
 	http.ListenAndServe(":8080", nil)
 }
