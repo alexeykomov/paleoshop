@@ -1,3 +1,5 @@
-module alexeykomov.me/shop2000
+module alexeykomov.me/paleoshop
 
 go 1.15
+
+require github.com/lib/pq v1.8.0
