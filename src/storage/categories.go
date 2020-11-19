@@ -1,6 +1,9 @@
 package storage
 
-import "database/sql"
+import (
+	"fmt"
+	"strings"
+)
 
 type Category struct {
 	id              int
@@ -32,15 +35,21 @@ func GetRootCategory() (Category, error) {
 	return rootCategory, nil
 }
 
-func GetSubcategoriesOfCategory(categoryId int) (Category, error) {
+func GetSubcategoriesOfCategory(ancestorAndCurrentIds []string) ([]Category, error) {
 	db, err := Connection()
 	if err != nil {
-		return Category{}, err
+		return []Category{}, err
 	}
-	rows, err := db.Query("SELECT * FROM CATEGORIES " +
-		"WHERE ancestry LIKE %id%")
+	rows, err := db.Query(
+		fmt.Sprintf("select products.id, ancestry, products.title "+
+			"from categories, products, category_products cp where "+
+			"categories.id = cp.category_id and "+
+			"products.id = cp.product_id and ancestry like '/%s%%'", strings.Join(ancestorAndCurrentIds, "/")))
 	var category Category
+	var categories []Category
 	for rows.Next() {
 		err = rows.Scan(&category.id, &category.title, &category.coverURL)
+		categories = append(categories, category)
 	}
+	return categories, nil
 }
