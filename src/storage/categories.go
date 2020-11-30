@@ -7,12 +7,12 @@ import (
 )
 
 type Category struct {
-	id              int
+	Id              int
 	title           string
 	coverURL        string
 	childCategories []Category
 	childProducts   []Product
-	ancestorIds []int
+	ancestorIds     []int
 }
 
 type Product struct {
@@ -20,11 +20,11 @@ type Product struct {
 	title       string
 	coverURL    string
 	description string
-	pictures []Picture
+	pictures    []Picture
 }
 
 type Picture struct {
-	id int
+	id  int
 	url string
 }
 
@@ -36,7 +36,7 @@ func GetRootCategory() (Category, error) {
 	row := db.QueryRow("SELECT id, title, cover FROM CATEGORIES " +
 		"WHERE ancestry = ''")
 	var rootCategory Category
-	err = row.Scan(&rootCategory.id, &rootCategory.title, &rootCategory.coverURL)
+	err = row.Scan(&rootCategory.Id, &rootCategory.title, &rootCategory.coverURL)
 	if err != nil {
 		return Category{}, err
 	}
@@ -49,13 +49,13 @@ func GetSubcategoriesOfCategory(categoryId string) ([]Category, error) {
 		return []Category{}, err
 	}
 	rows, err := db.Query(
-		fmt.Sprintf("select id, ancestry, title, cover from categories" +
+		fmt.Sprintf("select id, ancestry, title, cover from categories"+
 			" where id %s", categoryId))
 	var category Category
 	var categories []Category
 	var ancestry string
 	for rows.Next() {
-		err = rows.Scan(&category.id, &ancestry, &category.title, &category.coverURL)
+		err = rows.Scan(&category.Id, &ancestry, &category.title, &category.coverURL)
 		for _, id := range strings.Split(ancestry, "/") {
 			idInt, err := strconv.Atoi(id)
 			if err != nil {
@@ -68,7 +68,7 @@ func GetSubcategoriesOfCategory(categoryId string) ([]Category, error) {
 	return categories, nil
 }
 
-func GetProductsOfCategory(ancestorIds []string, categoryId string) ([]Product, error) {
+func GetProductsOfCategory(ancestorIds []string, categoryId int) ([]Product, error) {
 	db, err := Connection()
 	if err != nil {
 		return []Product{}, err
@@ -78,7 +78,7 @@ func GetProductsOfCategory(ancestorIds []string, categoryId string) ([]Product, 
 			"from categories, products, category_products cp where "+
 			"categories.id = cp.category_id and "+
 			"products.id = cp.product_id and ancestry like '/%s%%'",
-			strings.Join(append(ancestorIds, categoryId), "/")))
+			strings.Join(append(ancestorIds, strconv.Itoa(categoryId)), "/")))
 	var product Product
 	var products []Product
 	for rows.Next() {
