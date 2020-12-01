@@ -33,39 +33,50 @@ func GetRootCategory() (Category, error) {
 	if err != nil {
 		return Category{}, err
 	}
-	row := db.QueryRow("SELECT id, title, cover FROM CATEGORIES " +
-		"WHERE ancestry = ''")
+	row := db.QueryRow("select id, ancestry, title, cover from " +
+		"categories where ancestry = ''")
 	var rootCategory Category
-	err = row.Scan(&rootCategory.Id, &rootCategory.title, &rootCategory.coverURL)
+	var ancestry string
+	err = row.Scan(&rootCategory.Id, &ancestry,
+		&rootCategory.title, &rootCategory.coverURL)
+	populateAncestry(ancestry, rootCategory)
 	if err != nil {
 		return Category{}, err
 	}
 	return rootCategory, nil
 }
 
-func GetSubcategoriesOfCategory(categoryId string) ([]Category, error) {
+func GetSubcategoriesOfCategory(ancestorIds []string, categoryId int) ([]Category, error) {
 	db, err := Connection()
 	if err != nil {
 		return []Category{}, err
 	}
 	rows, err := db.Query(
-		fmt.Sprintf("select id, ancestry, title, cover from categories"+
-			" where id %s", categoryId))
+		fmt.Sprintf("select id, ancestry, title, cover from "+
+			"categories where ancestry = '/%s'",
+			strings.Join(append(ancestorIds, strconv.Itoa(categoryId)), "/")))
+	if err != nil {
+		return []Category{}, err
+	}
 	var category Category
 	var categories []Category
 	var ancestry string
 	for rows.Next() {
 		err = rows.Scan(&category.Id, &ancestry, &category.title, &category.coverURL)
-		for _, id := range strings.Split(ancestry, "/") {
-			idInt, err := strconv.Atoi(id)
-			if err != nil {
-				continue
-			}
-			category.ancestorIds = append(category.ancestorIds, idInt)
-		}
+		populateAncestry(ancestry, category)
 		categories = append(categories, category)
 	}
 	return categories, nil
+}
+
+func populateAncestry(ancestry string, category Category) {
+	for _, id := range strings.Split(ancestry, "/") {
+		idInt, err := strconv.Atoi(id)
+		if err != nil {
+			continue
+		}
+		category.ancestorIds = append(category.ancestorIds, idInt)
+	}
 }
 
 func GetProductsOfCategory(ancestorIds []string, categoryId int) ([]Product, error) {
@@ -79,6 +90,9 @@ func GetProductsOfCategory(ancestorIds []string, categoryId int) ([]Product, err
 			"categories.id = cp.category_id and "+
 			"products.id = cp.product_id and ancestry like '/%s%%'",
 			strings.Join(append(ancestorIds, strconv.Itoa(categoryId)), "/")))
+	if err != nil {
+		return []Product{}, err
+	}
 	var product Product
 	var products []Product
 	for rows.Next() {

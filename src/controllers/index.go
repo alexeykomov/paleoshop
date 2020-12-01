@@ -1,19 +1,31 @@
 package controllers
 
 import (
-	"fmt"
+	"io"
 	"net/http"
 	"alexeykomov.me/paleoshop/storage"
+	"html/template"
 )
 
+type IndexPageData struct {
+	Categories []storage.Category
+	Products []storage.Product
+}
+
 func IndexHandler(response http.ResponseWriter, request *http.Request) {
-	category, err := storage.GetRootCategory()
+	rootCategory, err := storage.GetRootCategory()
 	if err != nil {
 		response.WriteHeader(500)
+		io.WriteString(response, err.Error())
 		return
 	}
-	products, err := storage.GetProductsOfCategory([]string{}, category.Id)
+	categories, err := storage.GetSubcategoriesOfCategory([]string{}, rootCategory.Id)
+	products, err := storage.GetProductsOfCategory([]string{}, rootCategory.Id)
 
-	fmt.Fprintf(response, "<html><title>The first shop page</title></html>")
+	indexPage := template.Must(template.ParseFiles("views/index.html"))
+	indexPage.Execute(response, IndexPageData{
+		Categories: categories,
+		Products: products,
+	})
 }
- 
+

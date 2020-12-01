@@ -13,7 +13,7 @@ const (
 	host     = "localhost"
 	port     = 5432
 	user     = "paleoshop_user"
-	password = ""
+	password = "JoToo8kZzhHQxs6H"
 	dbname   = "postgres"
 )
 
@@ -33,7 +33,7 @@ func Connection() (*sql.DB, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer db.Close()
+		//defer db.Close()
 		globalDB = db
 		return db, nil
 	}
