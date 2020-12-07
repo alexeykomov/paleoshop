@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"alexeykomov.me/paleoshop/storage"
 	"html/template"
+	"os"
 )
 
 type IndexPageData struct {
@@ -21,8 +22,12 @@ func IndexHandler(response http.ResponseWriter, request *http.Request) {
 	}
 	categories, err := storage.GetSubcategoriesOfCategory([]string{}, rootCategory.Id)
 	products, err := storage.GetProductsOfCategory([]string{}, rootCategory.Id)
-
-	indexPage := template.Must(template.ParseFiles("views/index.html"))
+	wd, err := os.Getwd()
+	if err != nil {
+		response.WriteHeader(500)
+		io.WriteString(response, err.Error())
+	}
+	indexPage := template.Must(template.ParseFiles(wd + "/views/index.gohtml"))
 	indexPage.Execute(response, IndexPageData{
 		Categories: categories,
 		Products: products,
