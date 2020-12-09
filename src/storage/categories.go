@@ -17,7 +17,7 @@ type Category struct {
 
 type Product struct {
 	id          int
-	title       string
+	Title       string
 	coverURL    string
 	description string
 	pictures    []Picture
@@ -33,7 +33,7 @@ func GetRootCategory() (Category, error) {
 	if err != nil {
 		return Category{}, err
 	}
-	row := db.QueryRow("select id, ancestry, title, cover from " +
+	row := db.QueryRow("select id, ancestry, Title, cover from " +
 		"categories where ancestry = ''")
 	var rootCategory Category
 	var ancestry string
@@ -53,7 +53,7 @@ func GetSubcategoriesOfCategory(categoryId int) ([]Category, error) {
 		return []Category{}, err
 	}
 	rows, err := db.Query(
-		fmt.Sprintf("select id, ancestry, title, cover from "+
+		fmt.Sprintf("select id, ancestry, Title, cover from "+
 			"categories where ancestry = '%s'", strconv.Itoa(categoryId)))
 	if err != nil {
 		return []Category{}, err
@@ -74,15 +74,13 @@ func GetProductsOfCategory(category Category) ([]Product, error) {
 	if err != nil {
 		return []Product{}, err
 	}
-	ancestry := getAncestry(category)
-	fmt.Printf("ancestry: %s\n", ancestry)
 	query := fmt.Sprintf(
-		"select products.id, products.title, products.cover "+
+		"select products.id, products.Title, products.cover "+
 			"from categories, products, category_products cp where "+
 			"categories.id = cp.category_id and "+
 			"products.id = cp.product_id and "+
 			"(ancestry = '%s' or ancestry like '%s/%%')",
-		strconv.Itoa(category.Id), ancestry)
+		strconv.Itoa(category.Id), strconv.Itoa(category.Id))
 	fmt.Printf("Query: %s\n", query)
 	rows, err := db.Query(query)
 	if err != nil {
@@ -91,7 +89,7 @@ func GetProductsOfCategory(category Category) ([]Product, error) {
 	var product Product
 	var products []Product
 	for rows.Next() {
-		err = rows.Scan(&product.id, &product.title, &product.coverURL)
+		err = rows.Scan(&product.id, &product.Title, &product.coverURL)
 		products = append(products, product)
 	}
 	return products, nil
